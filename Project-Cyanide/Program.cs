@@ -71,17 +71,21 @@ namespace Project_Cyanide {
 			Image img = new Bitmap(ClientRectangle.Width, ClientRectangle.Height);
 			Graphics g = Graphics.FromImage(img);
 
-			Pen pen = new Pen(Color.LightBlue, 3f);
-				g.DrawLine(pen, new Point(0,			0			), new Point(Size.Width,	0));
-				g.DrawLine(pen, new Point(0,			0			), new Point(0,				Size.Height));
-				g.DrawLine(pen, new Point(0,			0			), new Point(Size.Width,	Size.Height));
-				g.DrawLine(pen, new Point(0,			Size.Height	), new Point(Size.Width,	0));
-				g.DrawLine(pen, new Point(Size.Width,	0			), new Point(Size.Width,	Size.Height));
-				g.DrawLine(pen, new Point(0,			Size.Height	), new Point(Size.Width,	Size.Height));
-			pen.Dispose();
+			DrawSquareFrame(g, Color.LightBlue, 3f, 0, 0, Size.Width, Size.Height);
 
 			display.DrawImage(img, ClientRectangle);
 			img.Dispose();
+		}
+
+		public void DrawSquareFrame(Graphics g, Color color, float width, int x1, int y1, int x2, int y2) {
+			Pen pen = new Pen(color, width);
+				g.DrawLine(pen, x1, y1, x2, y1);
+				g.DrawLine(pen, x1, y1, x1, y2);
+				g.DrawLine(pen, x1, y1, x2, y2);
+				g.DrawLine(pen, x1, y2, x2, y1);
+				g.DrawLine(pen, x2, y1, x2, y2);
+				g.DrawLine(pen, x1, y2, x2, y2);
+			pen.Dispose();
 		}
 	}
 }

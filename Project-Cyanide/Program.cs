@@ -40,47 +40,57 @@ namespace Project_Cyanide {
 			public int Top;
 			public int Right;
 			public int Bottom;
+
+			public RECT( int Left, int Top, int Right, int Bottom ) {
+				this.Left = Left;
+				this.Top = Top;
+				this.Right = Right;
+				this.Bottom = Bottom;
+			}
+
+			public static implicit operator RECT( Rectangle rect ) {
+				return new RECT(rect.Left, rect.Top, rect.Left + rect.Width, rect.Top + rect.Height);
+			}
+
+			public static implicit operator Rectangle( RECT rect ) {
+				return new Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
+			}
+
+			public Size Size {
+				get {
+					return new Size(Right - Left, Bottom - Top);
+				}
+				set {
+					Left = Right + value.Width;
+					Bottom = Top + value.Height;
+				}
+			}
 		}
 
 		protected WinEventDelegate _WinEventDelegate;
 
-		private List<Process> _processes;
-
 		public Overlay() {
 			_WinEventDelegate = new WinEventDelegate(WinEventCallback);
 
-			Rectangle rect = Screen.PrimaryScreen.Bounds;
+			RECT rect = Screen.PrimaryScreen.Bounds;
 			TransparencyKey = Color.Turquoise;
 			BackColor = Color.Turquoise;
 			FormBorderStyle = FormBorderStyle.None;
 			StartPosition = FormStartPosition.Manual;
 			DoubleBuffered = true;
 			Location = new Point(rect.Left, rect.Top);
-			Size = new Size(rect.Right - rect.Left, rect.Bottom - rect.Top);
+			Size = rect.Size;
 			TopMost = true;
 
 			SetForegroundWindow(Handle);
 
-			_processes = new List<Process>();
-
 			Console.WriteLine("Initialized Overlay");
-
-			foreach ( Process process in Process.GetProcesses() ) {
-				AddProcess(process);
-			}
-		}
-
-		public void AddProcess( Process process ) {
-			if ( process.MainWindowHandle != IntPtr.Zero ) {
-				_processes.Add(process);
-				SetWinEventHook(0x800B, 0x800B, IntPtr.Zero, _WinEventDelegate, (uint) process.Id, GetWindowThreadProcessId(process.MainWindowHandle, IntPtr.Zero), 0x3);
-				Console.WriteLine("Added process {0}: {1} with Handle {2}", process.Id, process.ProcessName, process.MainWindowHandle);
-			}
 		}
 
 		protected void WinEventCallback( IntPtr hWinEventHook, uint eventType, IntPtr hWnd, uint idObject, long idChild, uint dwEventThread, uint dwmsEventTime ) {
-			if ( eventType == 0x800B && idObject == 0 )
+			if ( eventType == 0x800B && idObject == 0 ) {
 				Invalidate();
+			}
 		}
 
 		protected override void OnLoad( EventArgs e ) {
@@ -96,27 +106,20 @@ namespace Project_Cyanide {
 			Image img = new Bitmap(ClientRectangle.Width, ClientRectangle.Height);
 			Graphics g = Graphics.FromImage(img);
 
-			DrawSquareFrame(g, Color.LightBlue, 3f, 0, 0, Size.Width, Size.Height);
-			Random r = new Random();
-			foreach ( Process process in _processes ) {
-				RECT rect = new RECT();
-				if ( GetWindowRect(process.MainWindowHandle, ref rect) )
-					DrawSquareFrame(g, Color.Green, 2f, rect.Left, rect.Top, rect.Right, rect.Bottom);
-			}
-
+			Pen pen = new Pen(Color.LightBlue, 3f);
+				DrawSquareFrame(g, pen, 0, 0, Size.Width, Size.Height);
+			pen.Dispose();
 			display.DrawImage(img, ClientRectangle);
 			img.Dispose();
 		}
 
-		public void DrawSquareFrame( Graphics g, Color color, float width, int x1, int y1, int x2, int y2 ) {
-			Pen pen = new Pen(color, width);
-				g.DrawLine(pen, x1, y1, x2, y1);
-				g.DrawLine(pen, x1, y1, x1, y2);
-				g.DrawLine(pen, x1, y1, x2, y2);
-				g.DrawLine(pen, x1, y2, x2, y1);
-				g.DrawLine(pen, x2, y1, x2, y2);
-				g.DrawLine(pen, x1, y2, x2, y2);
-			pen.Dispose();
+		public void DrawSquareFrame( Graphics g, Pen pen, int x1, int y1, int x2, int y2 ) {
+			g.DrawLine(pen, x1, y1, x2, y1);
+			g.DrawLine(pen, x1, y1, x1, y2);
+			g.DrawLine(pen, x1, y1, x2, y2);
+			g.DrawLine(pen, x1, y2, x2, y1);
+			g.DrawLine(pen, x2, y1, x2, y2);
+			g.DrawLine(pen, x1, y2, x2, y2);
 		}
 	}
 }

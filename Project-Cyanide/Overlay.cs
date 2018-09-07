@@ -1,10 +1,42 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace Project_Cyanide {
+	[StructLayout(LayoutKind.Sequential)]
+	public struct RECT {
+		public int Left;
+		public int Top;
+		public int Right;
+		public int Bottom;
+
+		public RECT( int Left, int Top, int Right, int Bottom ) {
+			this.Left = Left;
+			this.Top = Top;
+			this.Right = Right;
+			this.Bottom = Bottom;
+		}
+
+		public static implicit operator RECT( Rectangle rect ) {
+			return new RECT(rect.Left, rect.Top, rect.Left + rect.Width, rect.Top + rect.Height);
+		}
+
+		public static implicit operator Rectangle( RECT rect ) {
+			return new Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
+		}
+
+		public Size Size {
+			get {
+				return new Size(Right - Left, Bottom - Top);
+			}
+			set {
+				Left = Right + value.Width;
+				Bottom = Top + value.Height;
+			}
+		}
+	}
+
 	class Overlay : Form {
 
 		public delegate void WinEventDelegate( IntPtr hWinEventHook, uint eventType, IntPtr hwnd, uint idObject, long idChild, uint dwEventThread, uint dwmsEventTime );
@@ -21,39 +53,6 @@ namespace Project_Cyanide {
 		static extern bool GetWindowRect( IntPtr hWnd, ref RECT lpRect );
 		[DllImport("user32.dll")]
 		private static extern IntPtr SetWinEventHook( uint eventMin, uint eventMax, IntPtr hmodWinEventProc, WinEventDelegate lpfnWinEventProc, uint idProcess, uint idThread, uint dwFlags );
-
-		[StructLayout(LayoutKind.Sequential)]
-		public struct RECT {
-			public int Left;
-			public int Top;
-			public int Right;
-			public int Bottom;
-
-			public RECT( int Left, int Top, int Right, int Bottom ) {
-				this.Left = Left;
-				this.Top = Top;
-				this.Right = Right;
-				this.Bottom = Bottom;
-			}
-
-			public static implicit operator RECT( Rectangle rect ) {
-				return new RECT(rect.Left, rect.Top, rect.Left + rect.Width, rect.Top + rect.Height);
-			}
-
-			public static implicit operator Rectangle( RECT rect ) {
-				return new Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
-			}
-
-			public Size Size {
-				get {
-					return new Size(Right - Left, Bottom - Top);
-				}
-				set {
-					Left = Right + value.Width;
-					Bottom = Top + value.Height;
-				}
-			}
-		}
 
 		protected WinEventDelegate _WinEventDelegate;
 
